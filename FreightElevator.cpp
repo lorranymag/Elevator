@@ -2,12 +2,19 @@
 #include <vector>
 #include <IOStream>
 
+
+//child class of Elevator. Contains functions and variables specific to freight elevators
 class FreightElevator : public Elevator {
 public:
-	FreightElevator(int id, int currentFloor, int maxCapacity) {
+	FreightElevator(int id, int currentFloor,int numFloors, int maxCapacity) {
 		this->currentFloor = currentFloor;
 		this->maxCapacity = maxCapacity;
 		this->callOrder = std::vector<int>();
+		this->numFloors = numFloors;
+		this->weight = 0;
+		this->doorOpen = false;
+		this->moving = false;
+		this->movingUp = false;
 	}
 
 	void loadCargo(int cargoWeight) {

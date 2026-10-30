@@ -142,11 +142,13 @@
     <ClCompile Include="Elevator.cpp" />
     <ClCompile Include="FreightElevator.cpp" />
     <ClCompile Include="FreightElevator.h" />
+    <ClCompile Include="Interface.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="PassengerElevator.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Elevator.h" />
+    <ClInclude Include="Interface.h" />
     <ClInclude Include="PassengerElevator.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

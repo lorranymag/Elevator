@@ -1,6 +1,9 @@
 #ifndef ELEVATOR_H
 #define ELEVATOR_H
 
+
+
+//parent class for all elevators. Contains basic functions and variables that all elevators will have
 class Elevator {
 
 public:

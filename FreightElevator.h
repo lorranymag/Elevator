@@ -6,9 +6,11 @@
 #include <vector>
 
 
+
+//child class of Elevator. Contains functions and variables specific to freight elevators
 class FreightElevator : public Elevator {
 public:
-	FreightElevator(int id, int currentFloor, int maxCapacity);
+	FreightElevator(int id, int currentFloor, int numFloors, int maxCapacity);
 	void loadCargo(int weight);
 	void unloadCargo();
 	int getMaxCapacity() const;
