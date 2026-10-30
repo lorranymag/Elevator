@@ -1,4 +1,7 @@
 #include <iostream>
+#include "Elevator.h"
+#include "FreightElevator.h"
+#include "PassengerElevator.h"
 using namespace std;
 
 int main() {

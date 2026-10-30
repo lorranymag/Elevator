@@ -13,6 +13,7 @@ public:
 	void unloadCargo();
 	int getMaxCapacity() const;
 	std::vector<int> callOrder;
+	int weight; // current weight of cargo in the elevator
 
 
 	protected:

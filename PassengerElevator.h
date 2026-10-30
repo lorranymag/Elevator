@@ -12,4 +12,4 @@ private:
 	int currentLoad;
 };
 
-#endif // PASSENGER_ELEVATOR_H
+#endif  PASSENGER_ELEVATOR_H

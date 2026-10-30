@@ -3,17 +3,19 @@
 
 class Elevator {
 
-
 public:
-	Elevator(int id, int numFloors, int currentFloor);
+	Elevator();
+
 	void moveToFloor(int floor);
 	void callElevator(int currentFloor);
 	int getCurrentFloor() const;
+	void setId();
 	int getId() const;
 	void openDoor();
 	void closeDoor();
+	void getStatus() const;
 
-	int id; int numFloors; int currentFloor; bool doorOpen; bool moving; int direction;
+	int id; int numFloors; int currentFloor; bool doorOpen; bool moving; bool movingUp;
 
 
 };
