@@ -18,10 +18,16 @@
     <ClCompile Include="Main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="FreightElevator.cpp">
+    <ClCompile Include="FreightElevator.h">
       <Filter>Header Files</Filter>
     </ClCompile>
     <ClCompile Include="Elevator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="PassengerElevator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="FreightElevator.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
