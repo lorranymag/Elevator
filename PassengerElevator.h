@@ -21,4 +21,4 @@ private:
     // Stores multiple floor requests
     std::vector<int> requests;
 };
-#endif // PASSENGER_ELEVATOR_H
+#endif PASSENGER_ELEVATOR_H
