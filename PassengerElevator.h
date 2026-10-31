@@ -3,6 +3,7 @@
 #include "Elevator.h"
 #include <vector>
 
+// Child class of Elevator
 class PassengerElevator : public Elevator {
 public:
     PassengerElevator(int id, int currentFloor, int maxCapacity);
