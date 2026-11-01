@@ -11,8 +11,8 @@
 class FreightElevator : public Elevator {
 public:
 	FreightElevator(int id, int currentFloor, int numFloors, int maxCapacity);
-	void loadCargo(int weight);
-	void unloadCargo();
+	void loadCargo(int cargoWeight);
+	void unloadCargo(int cargoWeight);
 	int getMaxCapacity() const;
 	std::vector<int> callOrder;
 	int weight; // current weight of cargo in the elevator

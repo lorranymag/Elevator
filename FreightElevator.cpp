@@ -1,12 +1,11 @@
-#include "ELEVATOR.h"
+#include "FreightElevator.h"
 #include <vector>
 #include <IOStream>
 
 
 //child class of Elevator. Contains functions and variables specific to freight elevators
-class FreightElevator : public Elevator {
-public:
-	FreightElevator(int id, int currentFloor,int numFloors, int maxCapacity) {
+
+FreightElevator::FreightElevator(int id, int currentFloor,int numFloors, int maxCapacity) {
 		this->currentFloor = currentFloor;
 		this->maxCapacity = maxCapacity;
 		this->callOrder = std::vector<int>();
@@ -17,7 +16,7 @@ public:
 		this->movingUp = false;
 	}
 
-	void loadCargo(int cargoWeight) {
+	void FreightElevator::loadCargo(int cargoWeight) {
 
 		if (this->weight + cargoWeight <= this->maxCapacity) {
 			this->weight += cargoWeight;
@@ -27,7 +26,7 @@ public:
 		}
 	}
 
-	void unloadCargo(int cargoWeight) {
+	void FreightElevator::unloadCargo(int cargoWeight) {
 	
 		if (this->weight > 0 && this->weight-cargoWeight >= 0) {
 			this->weight -= cargoWeight;
@@ -38,13 +37,13 @@ public:
 	
 	
 	}
-	int getMaxCapacity() const {
+	int FreightElevator::getMaxCapacity() const {
 		return this->maxCapacity;
 	}
 	std::vector<int> callOrder;
 	int weight; // current weight of cargo in the elevator
 
-	void callFreight(int callFloor) {
+	/**void callFreight(int callFloor) {
 		
 		bool floorAlreadyCalled = false;
 
@@ -58,9 +57,9 @@ public:
 		if (floorAlreadyCalled == false) {
 			this->callOrder.push_back(callFloor);
 		}
-	}
+	}**/
 
-	void getStatus() const {
+	/**void FreightElevator::getStatus() const {
 		std::cout << "Elevator ID: " << id << std::endl;
 		std::cout << "Current Floor: " << currentFloor << std::endl;
 		std::cout << "Door Open: " << (doorOpen ? "Yes" : "No") << std::endl;
@@ -71,8 +70,4 @@ public:
 		std::cout << "Max Capacity: " << maxCapacity << std::endl;
 		std::cout << "Current Load: " << weight << std::endl;
 	}
-
-protected:
-	int maxCapacity;
-
-};
+	**/
