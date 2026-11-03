@@ -30,12 +30,24 @@
     <ClCompile Include="FreightElevator.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Interface.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ConsoleInput.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Elevator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="PassengerElevator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Interface.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ConsoleInput.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

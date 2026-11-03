@@ -1,24 +1,14 @@
 #ifndef PASSENGER_ELEVATOR_H
 #define PASSENGER_ELEVATOR_H
-#include "Elevator.h"
-#include <vector>
 
-// Child class of Elevator
+#include "Elevator.h"
+
+// Uses the shared base behavior; passenger specific rules can be added later.
+// mostly fine for now, freight ele might need more differences
 class PassengerElevator : public Elevator {
 public:
-    PassengerElevator(int id, int currentFloor, int maxCapacity);
-    void loadPassengers(int count);
-    void unloadPassengers();
-
-    // Request system
-    void addRequest(int floor);
-    void displayRequests() const;
-    void processRequests();
-private:
-    int maxCapacity;
-    int currentLoad;
-
-    // Stores multiple floor requests
-    std::vector<int> requests;
+    PassengerElevator(int id, int lowestFloor, int highestFloor, int capacityKg);
+    std::string getType() const override;
 };
-#endif PASSENGER_ELEVATOR_H
+
+#endif
