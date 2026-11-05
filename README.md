@@ -6,8 +6,6 @@
 
 This project is an elevator simulation program developed in C++. The purpose of the project is to simulate how elevators operate in a building, including floor movement, elevator requests, and different elevator types.
 
-The program uses Object-Oriented Programming concepts such as classes, inheritance, encapsulation, and polymorphism to organize the code.
-
 ## Features
 
 - Simulates elevator movement between floors.
@@ -55,15 +53,6 @@ The project contains the following files:
 
 ### Classes and Objects
 The program uses separate classes to represent elevators and manage different parts of the simulation.
-
-### Inheritance
-The PassengerElevator and FreightElevator classes inherit common properties and functions from the Elevator base class.
-
-### Encapsulation
-Elevator information and functionality are organized within classes to keep the program structured.
-
-### Polymorphism
-Different elevator types can share a common base class while providing their own specific behavior.
 
 ## Project Goal
 
