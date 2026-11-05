@@ -35,7 +35,7 @@ The project contains the following files:
 
 ## How to Run the Program
 
-1. Download or clone the GitHub repository.
+1. Download the GitHub repository.
 2. Open the `Elevator.slnx` solution file.
 3. Make sure all project files are included.
 4. Run the program.
