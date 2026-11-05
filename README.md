@@ -6,7 +6,7 @@
 
 This project is an elevator simulation program developed in C++. The purpose of the project is to simulate how elevators operate in a building, including floor movement, elevator requests, and different elevator types.
 
-The program uses Object-Oriented Programming (OOP) concepts such as classes, inheritance, encapsulation, and polymorphism to organize the code.
+The program uses Object-Oriented Programming concepts such as classes, inheritance, encapsulation, and polymorphism to organize the code.
 
 ## Features
 
@@ -40,8 +40,7 @@ The project contains the following files:
 1. Download or clone the GitHub repository.
 2. Open the `Elevator.slnx` solution file.
 3. Make sure all project files are included.
-4. Build the project.
-5. Run the program using `Ctrl + F5`.
+4. Run the program.
 
 ## How to Use the Program
 
@@ -77,13 +76,3 @@ This project also helps develop skills in:
 - Handling user input.
 - Organizing and maintaining code.
 - Designing a console-based application.
-
-## Future Improvements
-
-Possible future improvements include:
-
-- Adding more elevator movement features.
-- Improving the elevator request system.
-- Expanding passenger and freight elevator functionality.
-- Adding more detailed elevator status information.
-- Improving the user interface.
