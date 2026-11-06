@@ -12,8 +12,7 @@ public:
     void run();
 
 private:
-    // Each setup/call prompt is a stage, so no prompt blocks elevator updates.
-	//enum helps to keep track of which prompt is currently active and for easily checkign statuses
+    // Each setup/call prompt is a stage, so no prompt blocks elevator updates
     enum class Prompt { Building, Menu, Settings, Lowest, Highest, Capacity, ElevatorId, Pickup, Destination };
     Prompt prompt;
     bool running;

@@ -3,7 +3,7 @@
 
 #include <string>
 
-// Small platform adapter 
+
 class ConsoleInput {
 public:
     enum class Result { Waiting, Line, End };

@@ -6,18 +6,18 @@
 
 class Elevator {
 public:
+
+    // enums for direction and state of elevator help keep code readable
     enum class Direction { None, Up, Down };
     enum class State { Idle, Moving, OpeningDoors, DoorsOpen, ClosingDoors };
 
-    // A trip stays in the queue until its passenger reaches the destination
-	// Requests need multiple attributes so a struct is used instead of a pair or tuple
+    // struct for requets to be stored in a vector for each elevator, since each request has multiple variables
     struct Request {
         int pickupFloor;
         int destinationFloor;
         bool pickedUp;
     };
 
-	// The base class is abstract; each elevator type must implement getType().
     virtual ~Elevator();
     virtual std::string getType() const = 0;
 
@@ -41,7 +41,6 @@ public:
     bool openDoors();
     bool closeDoors();
 
-	//prtected methods are available to derived classes for implementing type specific rules
 protected:
     Elevator(int id, int lowestFloor, int highestFloor, int capacityKg);
 

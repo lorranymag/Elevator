@@ -3,8 +3,7 @@
 
 #include "Elevator.h"
 
-// Uses the shared base behavior; passenger specific rules can be added later.
-// mostly fine for now, freight ele might need more differences
+// Uses the shared base behavior; passenger-specific rules can be added later.
 class PassengerElevator : public Elevator {
 public:
     PassengerElevator(int id, int lowestFloor, int highestFloor, int capacityKg);

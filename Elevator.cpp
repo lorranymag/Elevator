@@ -6,13 +6,19 @@ Elevator::Elevator(int id, int lowestFloor, int highestFloor, int capacityKg)
     : id(id), lowestFloor(lowestFloor), highestFloor(highestFloor),
     capacityKg(capacityKg), currentFloor(lowestFloor), targetFloor(lowestFloor),
     currentLoadKg(0), direction(Direction::None), state(State::Idle),
-    travelTimeMs(2000), doorTimeMs(1000), doorHoldTimeMs(1000), elapsedTimeMs(0) {
+
+    // default values for travel and door times, can be adjusted to make simulation easier to follow/test
+    travelTimeMs(4000), doorTimeMs(2000), doorHoldTimeMs(2000), elapsedTimeMs(0) {
+
+    // basic exception handling to prevent user from creating elevators with invalid parameters
     if (id < 1 || lowestFloor < 1 || highestFloor < lowestFloor || capacityKg < 1) {
         throw std::invalid_argument("Invalid elevator configuration.");
     }
 }
-
+// virtual default destructor to ensure proper cleanup of derived classes
 Elevator::~Elevator() = default;
+
+// getters/accessors for elevator objects
 int Elevator::getId() const { return id; }
 int Elevator::getLowestFloor() const { return lowestFloor; }
 int Elevator::getHighestFloor() const { return highestFloor; }
@@ -29,10 +35,12 @@ const std::vector<Elevator::Request>& Elevator::getPendingRequests() const {
     return pendingRequests;
 }
 
+// helper function to return t/f so program can check if elevator can access a floor
 bool Elevator::canAccessFloor(int floor) const {
     return floor >= lowestFloor && floor <= highestFloor;
 }
 
+// helper function to determine direction of trip
 Elevator::Direction Elevator::tripDirection(const Request& request) const {
     return request.destinationFloor > request.pickupFloor ? Direction::Up : Direction::Down;
 }
@@ -53,6 +61,7 @@ bool Elevator::isOnTheWay(const Request& request) const {
 }
 
 int Elevator::nearestStopAhead() const {
+
     int nearest = 0; // Floors start at 1; zero means no eligible stop ahead.
     for (const auto& request : pendingRequests) {
         if (isOnTheWay(request)) {
@@ -69,7 +78,7 @@ void Elevator::refreshMovingTarget() {
     if (state != State::Moving) { return; }
 
     // At the exact floor boundary we can still stop here. Once travel toward
-    // the next floor has begun, currentFloor is behind us and cannot be served.
+    //  next floor has begun, currentFloor is behind  and cant be served.
     if (elapsedTimeMs == 0) {
         for (const auto& request : pendingRequests) {
             bool pickupHere = !request.pickedUp && request.pickupFloor == currentFloor &&
@@ -89,6 +98,7 @@ void Elevator::refreshMovingTarget() {
     }
 }
 
+//function returns t/f based on whether the elevator can enqueue a trip request
 bool Elevator::enqueueTrip(int pickupFloor, int destinationFloor) {
     if (!canAccessFloor(pickupFloor) || !canAccessFloor(destinationFloor) ||
         pickupFloor == destinationFloor) {
@@ -100,6 +110,7 @@ bool Elevator::enqueueTrip(int pickupFloor, int destinationFloor) {
         chooseNextStop();
     }
     else if (state == State::Moving) {
+
         refreshMovingTarget();
     }
     else if (state == State::DoorsOpen && pickupFloor == currentFloor &&
@@ -110,6 +121,7 @@ bool Elevator::enqueueTrip(int pickupFloor, int destinationFloor) {
     return true;
 }
 
+// The elevator is always in one of the following states:
 void Elevator::chooseNextStop() {
     elapsedTimeMs = 0;
     if (pendingRequests.empty()) {
@@ -119,7 +131,7 @@ void Elevator::chooseNextStop() {
         return;
     }
 
-    // First, serve compatible calls at this floor without an unnecessary move.
+    // compatible calls at this floor without an extra move.
     bool occupied = hasPassengers();
     for (const auto& request : pendingRequests) {
         if ((!request.pickedUp && request.pickupFloor == currentFloor &&
@@ -136,8 +148,8 @@ void Elevator::chooseNextStop() {
         targetFloor = nearest;
     }
     else {
-        // No stop remains in this sweep. Reposition toward the oldest waiting
-        // trip. Its destination cannot become eligible before its pickup.
+        // No stop remains on this pass, start toward the oldest waiting destination.
+        // destination cant become eligible before its pickup.
         const Request& request = pendingRequests.front();
         targetFloor = request.pickedUp ? request.destinationFloor : request.pickupFloor;
         direction = targetFloor > currentFloor ? Direction::Up : Direction::Down;
@@ -146,8 +158,8 @@ void Elevator::chooseNextStop() {
 }
 
 void Elevator::prepareStop() {
-    // An empty elevator may turn around to collect a waiting passenger here.
-    // An occupied elevator only boards people traveling in its current direction.
+    // empty elevator may turn around to collect a waiting passenger here.
+    // occupied elevator only boards people traveling in its current direction.
     if (!hasPassengers()) {
         bool matching = false;
         for (const auto& request : pendingRequests) {
@@ -173,8 +185,11 @@ void Elevator::serveCurrentFloor() {
     // Build the remaining queue in one pass instead of repeatedly shifting it.
     std::vector<Request> remaining;
     remaining.reserve(pendingRequests.size());
+
     for (Request request : pendingRequests) {
-        if (request.pickedUp && request.destinationFloor == currentFloor) { continue; }
+        if (request.pickedUp && request.destinationFloor == currentFloor) {
+            continue;
+        }
         if (!request.pickedUp && request.pickupFloor == currentFloor &&
             tripDirection(request) == direction) {
             request.pickedUp = true;
@@ -185,44 +200,61 @@ void Elevator::serveCurrentFloor() {
 }
 
 bool Elevator::openDoors() {
-    if (state != State::Idle) { return false; }
+    if (state != State::Idle) {
+        return false;
+    }
     state = State::OpeningDoors;
     elapsedTimeMs = 0;
     return true;
 }
 
 bool Elevator::closeDoors() {
-    if (state != State::DoorsOpen) { return false; }
+    if (state != State::DoorsOpen) {
+        return false;
+    }
     state = State::ClosingDoors;
     elapsedTimeMs = 0;
     return true;
 }
 
 void Elevator::update(int elapsedMs) {
-    if (elapsedMs <= 0) { return; }
+    if (elapsedMs <= 0) {
+        return;
+    }
     while (elapsedMs > 0) {
         // Reevaluate the whole queue on each tick and between floor steps.
         // Retargeting never resets an in-progress travel interval or reverses it.
         refreshMovingTarget();
         if (state == State::Idle) {
             chooseNextStop();
-            if (state == State::Idle) { return; }
+            if (state == State::Idle) {
+                return;
+            }
         }
         int duration = doorTimeMs;
-        if (state == State::Moving) { duration = travelTimeMs; }
-        else if (state == State::DoorsOpen) { duration = doorHoldTimeMs; }
+        if (state == State::Moving) {
+            duration = travelTimeMs;
+        }
+        else if (state == State::DoorsOpen) {
+            duration = doorHoldTimeMs;
+        }
 
         int remaining = duration - elapsedTimeMs;
         int step = elapsedMs < remaining ? elapsedMs : remaining;
         elapsedTimeMs += step;
         elapsedMs -= step;
-        if (elapsedTimeMs < duration) { return; }
+        if (elapsedTimeMs < duration) {
+            return;
+        }
         elapsedTimeMs = 0;
 
+        // use a switch for readability to handle state changes
         switch (state) {
         case State::Moving:
             currentFloor += direction == Direction::Up ? 1 : -1;
-            if (currentFloor == targetFloor) { prepareStop(); }
+            if (currentFloor == targetFloor) {
+                prepareStop();
+            }
             break;
         case State::OpeningDoors:
             state = State::DoorsOpen;

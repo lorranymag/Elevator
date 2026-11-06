@@ -7,12 +7,20 @@
 #include <sstream>
 #include <thread>
 
+
+
+
+
+
+
+// constructor for interface class, initializes variables to default values
 Interface::Interface()
     : prompt(Prompt::Building), running(true), liveStatusEnabled(false),
     buildingFloors(0), nextElevatorId(1),
     lowestFloor(0), highestFloor(0), selectedId(0), pickupFloor(0) {
 }
 
+// main loop for user interface, called in main and runs until user exits
 void Interface::run() {
     ConsoleInput input;
     std::cout << "ELEVATOR SIMULATOR\n"
@@ -20,12 +28,17 @@ void Interface::run() {
         << "Elevators keep moving while you enter setup or call details.\n"
         << "Travel: 2 seconds/floor. Doors: 1s opening, 1s open, 1s closing.\n";
     showPrompt();
+
+    // clock logic to track elapsed time for elevator updates
+    // Each loop checks for user input and updates elevators with the same elapsed time
     auto previous = std::chrono::steady_clock::now();
     while (running) {
         auto now = std::chrono::steady_clock::now();
         auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - previous).count();
         if (elapsed > 0) {
-            // Preserve sub-millisecond remainder; each elevator receives the same time.
+
+            // Preserve sub ms remainder; each elevator receives the same time
+
             int delta = elapsed > std::numeric_limits<int>::max()
                 ? std::numeric_limits<int>::max() : static_cast<int>(elapsed);
             previous += std::chrono::milliseconds(delta);
@@ -40,10 +53,14 @@ void Interface::run() {
 
         std::string line;
         ConsoleInput::Result result = input.poll(line);
-        if (result == ConsoleInput::Result::End) { break; }
+        if (result == ConsoleInput::Result::End) {
+            break;
+        }
         if (result == ConsoleInput::Result::Line) {
             processLine(line);
-            if (running) { showPrompt(); }
+            if (running) {
+                showPrompt();
+            }
         }
         // Short pause avoids a busy loop. Input is polled by this same thread.
         std::this_thread::sleep_for(std::chrono::milliseconds(20));
@@ -53,10 +70,15 @@ void Interface::run() {
 
 Elevator* Interface::findElevator(int id) const {
     for (const auto& elevator : elevators) {
-        if (elevator->getId() == id) { return elevator.get(); }
+        if (elevator->getId() == id) {
+            return elevator.get();
+        }
     }
     return nullptr;
 }
+
+// most of the logic from here below is to handle user input and display, not elevator behavior. The elevator logic is in Elevator.cpp and PassengerElevator.cpp.
+
 
 void Interface::promptDetails(std::string& label, int& minimum, int& maximum) const {
     minimum = 1;
@@ -219,7 +241,9 @@ void Interface::processLine(const std::string& line) {
                     std::cout << "That pickup floor has already been passed; it will wait for a later pass.\n";
                 }
             }
-            else { std::cout << "The elevator cannot accept that trip.\n"; }
+            else {
+                std::cout << "The elevator cannot accept that trip.\n";
+            }
             showMenu();
         }
         break;
