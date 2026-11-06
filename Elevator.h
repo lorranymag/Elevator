@@ -19,6 +19,7 @@ public:
         int weightKg;
     };
 
+	// constructor for elevator class, initializes variables to default values
     virtual ~Elevator();
     virtual std::string getType() const = 0;
     virtual bool acceptsPin(const std::string& pin) const;

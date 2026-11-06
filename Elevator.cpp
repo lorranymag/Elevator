@@ -18,12 +18,16 @@ Elevator::Elevator(int id, int lowestFloor, int highestFloor, int capacityKg)
 // virtual default destructor to ensure proper cleanup of derived classes
 Elevator::~Elevator() = default;
 
+// default implementation for accepting PINs, overridden in FreightElevator
+// even though only freights use PINS, perhaps a future passenger elevator could have a PIN for security, so this is left as a virtual function.
 bool Elevator::acceptsPin(const std::string&) const { return true; }
 
+// helper function to determine if the elevator has enough room for a given weight
 bool Elevator::hasRoom(int weightKg) const {
     return weightKg <= capacityKg - currentLoadKg;
 }
 
+// helper function to check if a given amount of passengers/cargo can be accommodated by the elevator
 Elevator::Capacity Elevator::checkCapacity(int amount) const {
     int weight = loadWeightKg(amount);
     if (weight <= 0 || weight > capacityKg) { return Capacity::TooHeavy; }
@@ -43,6 +47,8 @@ int Elevator::getDoorTimeMs() const { return doorTimeMs; }
 int Elevator::getElapsedTimeMs() const { return elapsedTimeMs; }
 Elevator::Direction Elevator::getDirection() const { return direction; }
 Elevator::State Elevator::getState() const { return state; }
+
+// getter for the vector of pending requests, so the interface can display them to the user
 const std::vector<Elevator::Request>& Elevator::getPendingRequests() const {
     return pendingRequests;
 }
@@ -57,6 +63,7 @@ Elevator::Direction Elevator::tripDirection(const Request& request) const {
     return request.destinationFloor > request.pickupFloor ? Direction::Up : Direction::Down;
 }
 
+// helper function to determine if the elevator has any passengers onboard
 bool Elevator::hasPassengers() const {
     for (const auto& request : pendingRequests) {
         if (request.pickedUp) { return true; }
@@ -64,6 +71,7 @@ bool Elevator::hasPassengers() const {
     return false;
 }
 
+// helper function to determine if a given request is on the way of the elevator's current direction and has room for it
 bool Elevator::isOnTheWay(const Request& request) const {
     int floor = request.pickedUp ? request.destinationFloor : request.pickupFloor;
     bool compatible = request.pickedUp ||
@@ -73,6 +81,7 @@ bool Elevator::isOnTheWay(const Request& request) const {
     return compatible && ahead;
 }
 
+// helper function to find the nearest stop ahead of the elevator's current position, returns 0 if no eligible stop is found
 int Elevator::nearestStopAhead() const {
 
     int nearest = 0; // Floors start at 1; zero means no eligible stop ahead.
@@ -87,6 +96,7 @@ int Elevator::nearestStopAhead() const {
     return nearest;
 }
 
+// helper function to refresh the elevator's target floor while moving, in case a new request is added that is closer than the current target
 void Elevator::refreshMovingTarget() {
     if (state != State::Moving) { return; }
 
@@ -105,6 +115,7 @@ void Elevator::refreshMovingTarget() {
         }
     }
 
+	// If a new request is added that is closer than the current target, change the target to the new request's floor.
     int nearest = nearestStopAhead();
     if (nearest != 0 && std::abs(nearest - currentFloor) < std::abs(targetFloor - currentFloor)) {
         targetFloor = nearest;
@@ -173,6 +184,7 @@ void Elevator::chooseNextStop() {
     state = State::Moving;
 }
 
+// helper function to prepare the elevator to stop at the current floor, either to pick up or drop off passengers
 void Elevator::prepareStop() {
     // empty elevator may turn around to collect a waiting passenger here.
     // occupied elevator only boards people traveling in its current direction.
@@ -197,6 +209,7 @@ void Elevator::prepareStop() {
     openDoors();
 }
 
+// helper function to serve the current floor, unloading passengers and loading new ones if possible
 void Elevator::serveCurrentFloor() {
     std::vector<Request> remaining;
     remaining.reserve(pendingRequests.size());
@@ -221,6 +234,7 @@ void Elevator::serveCurrentFloor() {
     pendingRequests.swap(remaining);
 }
 
+// The elevator can only open doors when idle, and can only close doors when they are open.
 bool Elevator::openDoors() {
     if (state != State::Idle) {
         return false;
@@ -230,6 +244,7 @@ bool Elevator::openDoors() {
     return true;
 }
 
+// The elevator can only close doors when they are open, and cannot be closed while moving or idle.
 bool Elevator::closeDoors() {
     if (state != State::DoorsOpen) {
         return false;
@@ -239,6 +254,7 @@ bool Elevator::closeDoors() {
     return true;
 }
 
+// helper function to update the elevator's state based on elapsed time, called in the main loop of the interface
 void Elevator::update(int elapsedMs) {
     if (elapsedMs <= 0) {
         return;

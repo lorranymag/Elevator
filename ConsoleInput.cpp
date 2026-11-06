@@ -21,7 +21,17 @@ If there’s no complete command yet, the loop keeps updating the elevators.
 Likely out of scope for this assignment, but the code is written to be cross-platform and to handle both interactive and piped input.
 **/
 
+/**
+References:
+https://learn.microsoft.com/en-us/cpp/c-runtime-library/reference/kbhit?view=msvc-170
+https://gist.github.com/sunmeat/a875fdcc90ca3c63d3d1e1de8bac1921
+https://man7.org/linux/man-pages/man2/select.2.html
+**/
 
+
+
+
+// constructor for ConsoleInput class, initializes variables to default values
 ConsoleInput::ConsoleInput() : interactive(false), skipLineFeed(false) {
 #ifdef _WIN32
     interactive = _isatty(_fileno(stdin)) != 0;
@@ -30,8 +40,11 @@ ConsoleInput::ConsoleInput() : interactive(false), skipLineFeed(false) {
 #endif
 }
 
+// destructor for ConsoleInput class, restores terminal settings if necessary
 ConsoleInput::~ConsoleInput() { setHidden(false); }
 
+
+// helper function to set the terminal input to hidden or visible, which is used when entering a PIN
 void ConsoleInput::setHidden(bool hide) {
     if (!interactive || hide == hidden) { return; }
 #ifndef _WIN32
@@ -48,13 +61,21 @@ void ConsoleInput::setHidden(bool hide) {
     hidden = hide;
 }
 
+
+// helper function to check if the input is interactive (i.e., from a terminal) or not, which is used to determine how to handle input and output
 bool ConsoleInput::isInteractive() const { return interactive; }
+
+// helper function to get the current pending input text, which is used to display the input as the user types
 const std::string& ConsoleInput::getPendingText() const { return pending; }
 
+
+
+// helper function to poll for input, which is called in the main loop of the interface to check for user input without blocking elevator updates
 ConsoleInput::Result ConsoleInput::poll(std::string& line) {
     while (true) {
         char ch;
 #ifdef _WIN32
+		// Windows-specific code to check for keyboard input without blocking
         if (interactive) {
             if (!_kbhit()) { return Result::Waiting; }
             int key = _getch();
@@ -62,6 +83,7 @@ ConsoleInput::Result ConsoleInput::poll(std::string& line) {
             if (key == 3 || key == 26) { return Result::End; } // Ctrl+C / Ctrl+Z.
             ch = static_cast<char>(key);
         }
+		// Non-interactive input (piped or redirected) is handled differently, using PeekNamedPipe to check for available input without blocking.
         else {
             HANDLE handle = GetStdHandle(STD_INPUT_HANDLE);
             if (GetFileType(handle) == FILE_TYPE_PIPE) {
@@ -77,6 +99,7 @@ ConsoleInput::Result ConsoleInput::poll(std::string& line) {
                 line = pending; pending.clear(); return Result::Line;
             }
         }
+		// Non-Windows platforms use select() to check for available input without blocking, and read() to get the input character.
 #else
         fd_set ready;
         FD_ZERO(&ready);

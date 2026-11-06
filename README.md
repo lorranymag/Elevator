@@ -35,7 +35,7 @@ The project contains the following files:
 
 ## How to Run the Program
 
-1. Download the GitHub repository.
+1. Download the GitHub repository or provided Zip file(then extract to desired location).
 2. Open the `Elevator.slnx` solution file.
 3. Make sure all project files are included.
 4. Run the program.
@@ -81,3 +81,8 @@ This project also helps develop skills in:
 -Lorrany provided core logic for handling elevator behavior, README.
 -Ryan assisted with building an interface for the user to interact with.
 -Brainstormed together on essential features, hierarchy, general project structure.
+
+## References (For out of classroom scope code)
+https://learn.microsoft.com/en-us/cpp/c-runtime-library/reference/kbhit?view=msvc-170
+https://gist.github.com/sunmeat/a875fdcc90ca3c63d3d1e1de8bac1921
+https://man7.org/linux/man-pages/man2/select.2.html

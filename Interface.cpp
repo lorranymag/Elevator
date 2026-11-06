@@ -116,10 +116,12 @@ void Interface::promptDetails(std::string& label, int& minimum, int& maximum) co
     }
 }
 
+// helper function to determine if the user is currently entering a PIN, which requires special handling for input and display
 bool Interface::enteringPin() const {
     return prompt == Prompt::SetupPin || prompt == Prompt::AccessPin;
 }
 
+// helper function to display the prompt for user input, which varies based on the current state of the interface
 void Interface::showPrompt() const {
     if (enteringPin()) {
         std::cout << (prompt == Prompt::SetupPin ? "Set a 4-digit freight PIN: "
@@ -137,6 +139,7 @@ void Interface::showPrompt() const {
     std::cout << label << " (" << minimum << "-" << maximum << "): " << std::flush;
 }
 
+// helper function to display the current status of all elevators, which is called when the user requests it or when live status printing is enabled
 void Interface::showMenu() {
     prompt = Prompt::Menu;
     std::cout << "\n----------------------------------------\n"
@@ -149,6 +152,7 @@ void Interface::showMenu() {
         << "----------------------------------------\n";
 }
 
+// helper function to display the current settings of the interface, which is called when the user requests it
 void Interface::showSettings() {
     prompt = Prompt::Settings;
     std::cout << "\n--------------- SETTINGS ----------------\n"
@@ -159,6 +163,7 @@ void Interface::showSettings() {
         << "----------------------------------------\n";
 }
 
+// helper function to display the current status of all elevators, which is called when the user requests it or when live status printing is enabled
 void Interface::addElevator(int capacity, const std::string& pin) {
     if (creatingFreight) {
         elevators.push_back(std::unique_ptr<Elevator>(new FreightElevator(
@@ -175,6 +180,8 @@ void Interface::addElevator(int capacity, const std::string& pin) {
     showMenu();
 }
 
+
+// helper function to process a line of user input, which is called when the user presses enter and a complete line is available
 void Interface::processLine(const std::string& line) {
     if (enteringPin()) {
         if (prompt == Prompt::AccessPin && line == "0") {
@@ -319,6 +326,7 @@ void Interface::processLine(const std::string& line) {
     }
 }
 
+// helper function to handle the user's input based on the current state of the interface, which is called after a valid line of input is received
 void Interface::submitTrip(int amount) {
     Elevator* elevator = findElevator(selectedId);
     Elevator::Capacity capacity = elevator->checkCapacity(amount);
@@ -370,6 +378,7 @@ std::string Interface::statusLine(const Elevator& elevator) const {
     return out.str();
 }
 
+// helper function to display the current status of all elevators, which is called when the user requests it or when live status printing is enabled
 void Interface::displayElevators() const {
     std::cout << "\n------------- ELEVATORS ----------------\n";
     if (elevators.empty()) { std::cout << "No elevators yet. Choose 1 to create one.\n"; }
@@ -385,6 +394,7 @@ void Interface::displayElevators() const {
     }
 }
 
+// helper function to determine if the user is currently entering a PIN, which requires special handling for input and display
 bool Interface::printStatusChanges() {
     bool changed = false;
     for (std::size_t i = 0; i < elevators.size(); ++i) {
@@ -398,6 +408,7 @@ bool Interface::printStatusChanges() {
     return changed;
 }
 
+// helper function to convert the elevator's direction enum to a string for display, which is called when showing the status of elevators
 std::string Interface::directionText(Elevator::Direction direction) const {
     switch (direction) {
     case Elevator::Direction::Up: return "Up";
@@ -407,6 +418,7 @@ std::string Interface::directionText(Elevator::Direction direction) const {
     return "Unknown";
 }
 
+// helper function to convert the elevator's state enum to a string for display, which is called when showing the status of elevators
 std::string Interface::stateText(Elevator::State state) const {
     switch (state) {
     case Elevator::State::Idle: return "Idle (doors closed)";
