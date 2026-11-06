@@ -8,6 +8,7 @@ This project is an elevator simulation program developed in C++. The purpose of 
 
 ## Features
 
+Core:
 - Simulates elevator movement between floors.
 - Supports passenger and freight elevator types.
 - Allows users to interact with the simulation through a console-based menu.
@@ -15,6 +16,12 @@ This project is an elevator simulation program developed in C++. The purpose of 
 - Tracks elevator information and status.
 - Uses input validation to handle user entries.
 - Organizes functionality into separate classes and files.
+
+Bonus:
+- Prioritized requests based on direction and proximity (trips "on the way").
+- Capacity limits for all elevators.
+- PIN system for accessing freight elevator types.
+- Minor exception handling for elevator constructor and freight pin setting.
 
 ## Programming Language
 
@@ -77,10 +84,24 @@ This project also helps develop skills in:
 - Designing a console-based application.
 
 
+## Areas of improvement
+
+- Increase capabilities of interface to modify elevators should the user have made a mistake(remove/modify).
+- Add GUI or improve the display of the live status printing.
+- Add functionality to save elevators/building info setup for read/write to avoid setting up each time(although this is the only way to currently reset the stored elevators).
+
+
 ## ROLES AND RESPONSIBILITIES
--Lorrany provided core logic for handling elevator behavior, README.
--Ryan assisted with building an interface for the user to interact with.
--Brainstormed together on essential features, hierarchy, general project structure.
+Lorrany:
+- Provided core logic for handling elevator behavior.
+- README.
+
+Ryan:
+- Assisted with building an interface for the user to interact with.
+- Added explanatory comments
+
+Shared:
+- Brainstormed together on essential features, hierarchy, general project structure.
 
 ## References (For out of classroom scope code)
 https://learn.microsoft.com/en-us/cpp/c-runtime-library/reference/kbhit?view=msvc-170
