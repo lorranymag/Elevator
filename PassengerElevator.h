@@ -8,6 +8,9 @@ class PassengerElevator : public Elevator {
 public:
     PassengerElevator(int id, int lowestFloor, int highestFloor, int capacityKg);
     std::string getType() const override;
+
+protected:
+    int loadWeightKg(int people) const override;
 };
 
 #endif

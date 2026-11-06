@@ -10,3 +10,9 @@ PassengerElevator::PassengerElevator(int id, int lowestFloor, int highestFloor,
 std::string PassengerElevator::getType() const {
     return "Passenger";
 }
+
+int PassengerElevator::loadWeightKg(int people) const {
+    const int estimatedAdultKg = 75;
+    if (people <= 0 || people > getCapacityKg() / estimatedAdultKg) { return 0; }
+    return people * estimatedAdultKg;
+}

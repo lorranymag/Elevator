@@ -13,7 +13,7 @@ public:
 
 private:
     // Each setup/call prompt is a stage, so no prompt blocks elevator updates
-    enum class Prompt { Building, Menu, Settings, Lowest, Highest, Capacity, ElevatorId, Pickup, Destination };
+    enum class Prompt { Building, Menu, Settings, Lowest, Highest, Capacity, SetupPin, ElevatorId, AccessPin, Pickup, Destination, Load };
     Prompt prompt;
     bool running;
     bool liveStatusEnabled;
@@ -23,6 +23,10 @@ private:
     int highestFloor;
     int selectedId;
     int pickupFloor;
+    int destinationFloor;
+    int setupCapacity;
+    bool creatingFreight;
+    std::string tripPin;
     std::vector<std::unique_ptr<Elevator>> elevators;
     std::vector<std::string> lastStatus;
 
@@ -31,6 +35,9 @@ private:
     void showPrompt() const;
     void showMenu();
     void showSettings();
+    bool enteringPin() const;
+    void addElevator(int capacity, const std::string& pin = "");
+    void submitTrip(int amount);
     void displayElevators() const;
     bool printStatusChanges();
     Elevator* findElevator(int id) const;

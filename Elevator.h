@@ -16,10 +16,14 @@ public:
         int pickupFloor;
         int destinationFloor;
         bool pickedUp;
+        int weightKg;
     };
 
     virtual ~Elevator();
     virtual std::string getType() const = 0;
+    virtual bool acceptsPin(const std::string& pin) const;
+    enum class Capacity { TooHeavy, Wait, Fits };
+    Capacity checkCapacity(int amount) const;
 
     int getId() const;
     int getLowestFloor() const;
@@ -36,7 +40,8 @@ public:
     const std::vector<Request>& getPendingRequests() const;
     bool canAccessFloor(int floor) const;
 
-    bool enqueueTrip(int pickupFloor, int destinationFloor);
+    bool enqueueTrip(int pickupFloor, int destinationFloor, int amount = 1,
+        const std::string& pin = "");
     void update(int elapsedMs);
     bool openDoors();
     bool closeDoors();
@@ -44,7 +49,11 @@ public:
 protected:
     Elevator(int id, int lowestFloor, int highestFloor, int capacityKg);
 
+    // Passenger amounts count people; freight amounts are already kilograms.
+    virtual int loadWeightKg(int amount) const = 0;
+
 private:
+    bool hasRoom(int weightKg) const;
     Direction tripDirection(const Request& request) const;
     bool hasPassengers() const;
     void chooseNextStop();

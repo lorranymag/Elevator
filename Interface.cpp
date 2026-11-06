@@ -1,6 +1,7 @@
 #include "Interface.h"
 #include "ConsoleInput.h"
 #include "PassengerElevator.h"
+#include "FreightElevator.h"
 #include <chrono>
 #include <iostream>
 #include <limits>
@@ -17,7 +18,8 @@
 Interface::Interface()
     : prompt(Prompt::Building), running(true), liveStatusEnabled(false),
     buildingFloors(0), nextElevatorId(1),
-    lowestFloor(0), highestFloor(0), selectedId(0), pickupFloor(0) {
+    lowestFloor(0), highestFloor(0), selectedId(0), pickupFloor(0), destinationFloor(0),
+    setupCapacity(0), creatingFreight(false) {
 }
 
 // main loop for user interface, called in main and runs until user exits
@@ -26,7 +28,7 @@ void Interface::run() {
     std::cout << "ELEVATOR SIMULATOR\n"
         << "Floors are numbered from 1 upward. Enter menu numbers to operate.\n"
         << "Elevators keep moving while you enter setup or call details.\n"
-        << "Travel: 2 seconds/floor. Doors: 1s opening, 1s open, 1s closing.\n";
+        << "Travel: 4 seconds/floor. Doors: 2s opening, 2s open, 2s closing.\n";
     showPrompt();
 
     // clock logic to track elapsed time for elevator updates
@@ -45,7 +47,7 @@ void Interface::run() {
             for (auto& elevator : elevators) { elevator->update(delta); }
             if (liveStatusEnabled && printStatusChanges()) {
                 showPrompt();
-                if (input.isInteractive()) {
+                if (input.isInteractive() && !enteringPin()) {
                     std::cout << input.getPendingText() << std::flush;
                 }
             }
@@ -58,6 +60,7 @@ void Interface::run() {
         }
         if (result == ConsoleInput::Result::Line) {
             processLine(line);
+            input.setHidden(enteringPin());
             if (running) {
                 showPrompt();
             }
@@ -85,13 +88,23 @@ void Interface::promptDetails(std::string& label, int& minimum, int& maximum) co
     maximum = buildingFloors;
     switch (prompt) {
     case Prompt::Building: label = "Number of building floors"; minimum = 5; maximum = 20; break;
-    case Prompt::Menu: label = "Choose a menu number"; minimum = 0; maximum = 4; break;
+    case Prompt::Menu: label = "Choose a menu number"; minimum = 0; maximum = 5; break;
     case Prompt::Settings: label = "Choose a settings option"; minimum = 0; maximum = 1; break;
     case Prompt::Lowest: label = "Lowest accessible floor"; break;
     case Prompt::Highest: label = "Highest accessible floor"; minimum = lowestFloor; break;
     case Prompt::Capacity: label = "Maximum load in kg"; maximum = 10000; break;
     case Prompt::ElevatorId:
         label = "Enter elevator ID (0 to cancel)"; minimum = 0; maximum = nextElevatorId - 1; break;
+    case Prompt::SetupPin:
+    case Prompt::AccessPin:
+        break;
+    case Prompt::Load:
+        label = dynamic_cast<const FreightElevator*>(findElevator(selectedId))
+            ? "Please weigh your cargo and report the weight in kg (whole kg)"
+            : "How many people are coming on board? (75 kg per person)";
+        minimum = 0;
+        maximum = std::numeric_limits<int>::max();
+        break;
     case Prompt::Pickup:
     case Prompt::Destination: {
         const Elevator* elevator = findElevator(selectedId);
@@ -103,10 +116,24 @@ void Interface::promptDetails(std::string& label, int& minimum, int& maximum) co
     }
 }
 
+bool Interface::enteringPin() const {
+    return prompt == Prompt::SetupPin || prompt == Prompt::AccessPin;
+}
+
 void Interface::showPrompt() const {
+    if (enteringPin()) {
+        std::cout << (prompt == Prompt::SetupPin ? "Set a 4-digit freight PIN: "
+            : "Enter the 4-digit freight PIN (0 to cancel): ")
+            << std::flush;
+        return;
+    }
     std::string label;
     int minimum, maximum;
     promptDetails(label, minimum, maximum);
+    if (prompt == Prompt::Load) {
+        std::cout << label << " (0 to cancel): " << std::flush;
+        return;
+    }
     std::cout << label << " (" << minimum << "-" << maximum << "): " << std::flush;
 }
 
@@ -118,7 +145,7 @@ void Interface::showMenu() {
         << "1. Add a passenger elevator\n2. View elevators and queued trips\n"
         << "3. Call an elevator (pickup + destination)\n"
         << "4. Settings (live status: " << (liveStatusEnabled ? "ON" : "OFF") << ")\n"
-        << "0. Quit\n"
+        << "5. Add a freight elevator\n0. Quit\n"
         << "----------------------------------------\n";
 }
 
@@ -132,13 +159,52 @@ void Interface::showSettings() {
         << "----------------------------------------\n";
 }
 
+void Interface::addElevator(int capacity, const std::string& pin) {
+    if (creatingFreight) {
+        elevators.push_back(std::unique_ptr<Elevator>(new FreightElevator(
+            nextElevatorId, lowestFloor, highestFloor, capacity, pin)));
+    }
+    else {
+        elevators.push_back(std::unique_ptr<Elevator>(new PassengerElevator(
+            nextElevatorId, lowestFloor, highestFloor, capacity)));
+    }
+    lastStatus.push_back(statusLine(*elevators.back()));
+    std::cout << "\nCreated " << (creatingFreight ? "freight" : "passenger")
+        << " elevator #" << nextElevatorId++ << " at floor " << lowestFloor
+        << ", idle with doors closed.\n";
+    showMenu();
+}
+
 void Interface::processLine(const std::string& line) {
+    if (enteringPin()) {
+        if (prompt == Prompt::AccessPin && line == "0") {
+            showMenu();
+        }
+        else if (!FreightElevator::validPin(line)) {
+            std::cout << "\nEnter exactly four digits.\n";
+        }
+        else if (prompt == Prompt::SetupPin) {
+            addElevator(setupCapacity, line);
+        }
+        else if (findElevator(selectedId)->acceptsPin(line)) {
+            tripPin = line;
+            prompt = Prompt::Pickup;
+        }
+        else {
+            std::cout << "\nIncorrect freight PIN.\n";
+        }
+        return;
+    }
     std::string label;
     int minimum, maximum, value;
     promptDetails(label, minimum, maximum);
     std::istringstream input(line);
     char extra;
     if (!(input >> value) || (input >> extra) || value < minimum || value > maximum) {
+        if (prompt == Prompt::Load) {
+            std::cout << "\nEnter a positive whole number, or 0 to cancel.\n";
+            return;
+        }
         std::cout << "\nEnter one whole number from " << minimum << " to " << maximum << ".\n";
         return;
     }
@@ -150,12 +216,14 @@ void Interface::processLine(const std::string& line) {
         break;
     case Prompt::Menu:
         if (value == 0) { running = false; }
-        else if (value == 1) {
+        else if (value == 1 || value == 5) {
             if (nextElevatorId == std::numeric_limits<int>::max()) {
                 std::cout << "No more elevator IDs are available.\n";
             }
             else {
-                std::cout << "\nCreate passenger elevator #" << nextElevatorId
+                creatingFreight = value == 5;
+                std::cout << "\nCreate " << (creatingFreight ? "freight" : "passenger")
+                    << " elevator #" << nextElevatorId
                     << ". It serves every floor between the two limits.\n";
                 prompt = Prompt::Lowest;
             }
@@ -197,12 +265,13 @@ void Interface::processLine(const std::string& line) {
         prompt = Prompt::Capacity;
         break;
     case Prompt::Capacity:
-        elevators.push_back(std::unique_ptr<Elevator>(new PassengerElevator(
-            nextElevatorId, lowestFloor, highestFloor, value)));
-        lastStatus.push_back(statusLine(*elevators.back()));
-        std::cout << "\nCreated passenger elevator #" << nextElevatorId++
-            << " at floor " << lowestFloor << ", idle with doors closed.\n";
-        showMenu();
+        if (creatingFreight) {
+            setupCapacity = value;
+            prompt = Prompt::SetupPin;
+        }
+        else {
+            addElevator(value);
+        }
         break;
     case Prompt::ElevatorId:
         if (value == 0) { showMenu(); }
@@ -213,12 +282,17 @@ void Interface::processLine(const std::string& line) {
                 std::cout << "This elevator serves only one floor and cannot provide a trip.\n";
                 showMenu();
             }
-            else { selectedId = value; prompt = Prompt::Pickup; }
+            else {
+                selectedId = value;
+                tripPin.clear();
+                prompt = dynamic_cast<const FreightElevator*>(elevator)
+                    ? Prompt::AccessPin : Prompt::Pickup;
+            }
         }
         break;
     case Prompt::Pickup:
         pickupFloor = value;
-        std::cout << "\nEnter a destination to submit this call; the elevator keeps moving.\n";
+        std::cout << "\nThe elevator keeps moving while you enter trip details.\n";
         prompt = Prompt::Destination;
         break;
     case Prompt::Destination:
@@ -226,28 +300,55 @@ void Interface::processLine(const std::string& line) {
             std::cout << "\nDestination must differ from pickup. Select a different floor.\n";
         }
         else {
-            Elevator* elevator = findElevator(selectedId);
-            bool pickupAlreadyPassed = elevator->getState() == Elevator::State::Moving &&
-                ((elevator->getDirection() == Elevator::Direction::Up &&
-                    pickupFloor < elevator->getCurrentFloor()) ||
-                    (elevator->getDirection() == Elevator::Direction::Down &&
-                        pickupFloor > elevator->getCurrentFloor()) ||
-                    (pickupFloor == elevator->getCurrentFloor() &&
-                        elevator->getElapsedTimeMs() > 0));
-            if (elevator->enqueueTrip(pickupFloor, value)) {
-                std::cout << "\nQueued for elevator #" << selectedId << ": pickup "
-                    << pickupFloor << " -> destination " << value << ".\n";
-                if (pickupAlreadyPassed) {
-                    std::cout << "That pickup floor has already been passed; it will wait for a later pass.\n";
-                }
-            }
-            else {
-                std::cout << "The elevator cannot accept that trip.\n";
-            }
-            showMenu();
+            destinationFloor = value;
+            prompt = Prompt::Load;
         }
         break;
+    case Prompt::Load:
+        if (value == 0) {
+            tripPin.clear();
+            showMenu();
+        }
+        else {
+            submitTrip(value);
+        }
+        break;
+    case Prompt::SetupPin:
+    case Prompt::AccessPin:
+        break; // PINs are handled as strings above to preserve leading zeros.
     }
+}
+
+void Interface::submitTrip(int amount) {
+    Elevator* elevator = findElevator(selectedId);
+    Elevator::Capacity capacity = elevator->checkCapacity(amount);
+    if (capacity == Elevator::Capacity::TooHeavy) {
+        std::cout << "\nThis load exceeds the " << elevator->getCapacityKg()
+            << " kg maximum. Reduce the load and try again.\n";
+        return;
+    }
+
+    bool pickupAlreadyPassed = elevator->getState() == Elevator::State::Moving &&
+        ((elevator->getDirection() == Elevator::Direction::Up &&
+            pickupFloor < elevator->getCurrentFloor()) ||
+            (elevator->getDirection() == Elevator::Direction::Down &&
+                pickupFloor > elevator->getCurrentFloor()) ||
+            (pickupFloor == elevator->getCurrentFloor() && elevator->getElapsedTimeMs() > 0));
+    if (elevator->enqueueTrip(pickupFloor, destinationFloor, amount, tripPin)) {
+        std::cout << "\nQueued for elevator #" << selectedId << ": pickup "
+            << pickupFloor << " -> destination " << destinationFloor << ".\n";
+        if (capacity == Elevator::Capacity::Wait) {
+            std::cout << "There is not enough room right now. The trip will wait until capacity frees up.\n";
+        }
+        if (pickupAlreadyPassed) {
+            std::cout << "That pickup floor has already been passed; it will wait for a later pass.\n";
+        }
+    }
+    else {
+        std::cout << "The elevator cannot accept that trip.\n";
+    }
+    tripPin.clear();
+    showMenu();
 }
 
 std::string Interface::statusLine(const Elevator& elevator) const {
@@ -264,7 +365,8 @@ std::string Interface::statusLine(const Elevator& elevator) const {
         out << " | Next stop: " << elevator.getTargetFloor();
     }
     out << " | Waiting: " << elevator.getPendingRequests().size() - onboard
-        << " | Onboard: " << onboard;
+        << " | Onboard: " << onboard
+        << " | Load: " << elevator.getCurrentLoadKg() << "/" << elevator.getCapacityKg() << " kg";
     return out.str();
 }
 
@@ -278,7 +380,7 @@ void Interface::displayElevators() const {
         for (const auto& request : elevator->getPendingRequests()) {
             std::cout << "  " << (request.pickedUp ? "Onboard" : "Waiting")
                 << ": pickup " << request.pickupFloor << " -> destination "
-                << request.destinationFloor << "\n";
+                << request.destinationFloor << " (" << request.weightKg << " kg)\n";
         }
     }
 }

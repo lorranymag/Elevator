@@ -18,6 +18,18 @@ Elevator::Elevator(int id, int lowestFloor, int highestFloor, int capacityKg)
 // virtual default destructor to ensure proper cleanup of derived classes
 Elevator::~Elevator() = default;
 
+bool Elevator::acceptsPin(const std::string&) const { return true; }
+
+bool Elevator::hasRoom(int weightKg) const {
+    return weightKg <= capacityKg - currentLoadKg;
+}
+
+Elevator::Capacity Elevator::checkCapacity(int amount) const {
+    int weight = loadWeightKg(amount);
+    if (weight <= 0 || weight > capacityKg) { return Capacity::TooHeavy; }
+    return hasRoom(weight) ? Capacity::Fits : Capacity::Wait;
+}
+
 // getters/accessors for elevator objects
 int Elevator::getId() const { return id; }
 int Elevator::getLowestFloor() const { return lowestFloor; }
@@ -54,7 +66,8 @@ bool Elevator::hasPassengers() const {
 
 bool Elevator::isOnTheWay(const Request& request) const {
     int floor = request.pickedUp ? request.destinationFloor : request.pickupFloor;
-    bool compatible = request.pickedUp || tripDirection(request) == direction;
+    bool compatible = request.pickedUp ||
+        (tripDirection(request) == direction && hasRoom(request.weightKg));
     bool ahead = (direction == Direction::Up && floor > currentFloor) ||
         (direction == Direction::Down && floor < currentFloor);
     return compatible && ahead;
@@ -82,7 +95,7 @@ void Elevator::refreshMovingTarget() {
     if (elapsedTimeMs == 0) {
         for (const auto& request : pendingRequests) {
             bool pickupHere = !request.pickedUp && request.pickupFloor == currentFloor &&
-                tripDirection(request) == direction;
+                tripDirection(request) == direction && hasRoom(request.weightKg);
             bool dropoffHere = request.pickedUp && request.destinationFloor == currentFloor;
             if (pickupHere || dropoffHere) {
                 targetFloor = currentFloor;
@@ -99,12 +112,15 @@ void Elevator::refreshMovingTarget() {
 }
 
 //function returns t/f based on whether the elevator can enqueue a trip request
-bool Elevator::enqueueTrip(int pickupFloor, int destinationFloor) {
+bool Elevator::enqueueTrip(int pickupFloor, int destinationFloor, int amount,
+    const std::string& pin) {
+    int weightKg = loadWeightKg(amount);
     if (!canAccessFloor(pickupFloor) || !canAccessFloor(destinationFloor) ||
-        pickupFloor == destinationFloor) {
+        pickupFloor == destinationFloor || !acceptsPin(pin) ||
+        weightKg <= 0 || weightKg > capacityKg) {
         return false;
     }
-    Request request = { pickupFloor, destinationFloor, false };
+    Request request = { pickupFloor, destinationFloor, false, weightKg };
     pendingRequests.push_back(request);
     if (state == State::Idle) {
         chooseNextStop();
@@ -114,7 +130,7 @@ bool Elevator::enqueueTrip(int pickupFloor, int destinationFloor) {
         refreshMovingTarget();
     }
     else if (state == State::DoorsOpen && pickupFloor == currentFloor &&
-        tripDirection(request) == direction) {
+        tripDirection(request) == direction && hasRoom(weightKg)) {
         serveCurrentFloor();
         elapsedTimeMs = 0; // Give a newly boarding passenger a full door hold.
     }
@@ -135,7 +151,7 @@ void Elevator::chooseNextStop() {
     bool occupied = hasPassengers();
     for (const auto& request : pendingRequests) {
         if ((!request.pickedUp && request.pickupFloor == currentFloor &&
-            (tripDirection(request) == direction || !occupied)) ||
+            (tripDirection(request) == direction || !occupied) && hasRoom(request.weightKg)) ||
             (request.pickedUp && request.destinationFloor == currentFloor)) {
             targetFloor = currentFloor;
             prepareStop();
@@ -182,17 +198,23 @@ void Elevator::prepareStop() {
 }
 
 void Elevator::serveCurrentFloor() {
-    // Build the remaining queue in one pass instead of repeatedly shifting it.
     std::vector<Request> remaining;
     remaining.reserve(pendingRequests.size());
 
+    // Unload first so every waiting group can use space freed at this stop.
+    for (const Request& request : pendingRequests) {
+        if (request.pickedUp && request.destinationFloor == currentFloor) {
+            currentLoadKg -= request.weightKg;
+        }
+    }
     for (Request request : pendingRequests) {
         if (request.pickedUp && request.destinationFloor == currentFloor) {
             continue;
         }
         if (!request.pickedUp && request.pickupFloor == currentFloor &&
-            tripDirection(request) == direction) {
+            tripDirection(request) == direction && hasRoom(request.weightKg)) {
             request.pickedUp = true;
+            currentLoadKg += request.weightKg;
         }
         remaining.push_back(request);
     }

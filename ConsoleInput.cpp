@@ -13,6 +13,13 @@
 #endif
 
 
+/**
+The elevators and the menu run in the same loop. 
+A regular getline() would stop that loop until the user presses Enter,
+so we put the platform specific keyboard checks in a separate class. 
+If there’s no complete command yet, the loop keeps updating the elevators.
+Likely out of scope for this assignment, but the code is written to be cross-platform and to handle both interactive and piped input.
+**/
 
 
 ConsoleInput::ConsoleInput() : interactive(false), skipLineFeed(false) {
@@ -21,6 +28,24 @@ ConsoleInput::ConsoleInput() : interactive(false), skipLineFeed(false) {
 #else
     interactive = isatty(STDIN_FILENO) != 0;
 #endif
+}
+
+ConsoleInput::~ConsoleInput() { setHidden(false); }
+
+void ConsoleInput::setHidden(bool hide) {
+    if (!interactive || hide == hidden) { return; }
+#ifndef _WIN32
+    if (hide) {
+        if (tcgetattr(STDIN_FILENO, &visibleSettings) != 0) { return; }
+        termios settings = visibleSettings;
+        settings.c_lflag &= ~ECHO;
+        if (tcsetattr(STDIN_FILENO, TCSANOW, &settings) != 0) { return; }
+    }
+    else if (tcsetattr(STDIN_FILENO, TCSANOW, &visibleSettings) != 0) {
+        return;
+    }
+#endif
+    hidden = hide;
 }
 
 bool ConsoleInput::isInteractive() const { return interactive; }
@@ -71,6 +96,8 @@ ConsoleInput::Result ConsoleInput::poll(std::string& line) {
             skipLineFeed = ch == '\r';
 #ifdef _WIN32
             if (interactive) { std::cout << '\n'; }
+#else
+            if (hidden) { std::cout << '\n'; }
 #endif
             line = pending;
             pending.clear();
@@ -80,14 +107,14 @@ ConsoleInput::Result ConsoleInput::poll(std::string& line) {
             if (!pending.empty()) {
                 pending.pop_back();
 #ifdef _WIN32
-                if (interactive) { std::cout << "\b \b" << std::flush; }
+                if (interactive && !hidden) { std::cout << "\b \b" << std::flush; }
 #endif
             }
         }
         else if (ch >= ' ' || ch == '\t') {
             pending += ch;
 #ifdef _WIN32
-            if (interactive) { std::cout << ch << std::flush; }
+            if (interactive && !hidden) { std::cout << ch << std::flush; }
 #endif
         }
     }
